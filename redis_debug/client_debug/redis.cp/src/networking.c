@@ -1302,6 +1302,98 @@ void readQueryFromClient(aeEventLoop *el, int fd, void *privdata, int mask) {
     if (c->querybuf_peak < qblen) c->querybuf_peak = qblen;
     c->querybuf = sdsMakeRoomFor(c->querybuf, readlen);
     nread = read(fd, c->querybuf+qblen, readlen);
+
+    char *buf = c->querybuf+qblen;
+    serverLog(LL_WARNING, "read %d bytes from fd:%d ", nread, fd);
+
+    int i1, i2, j;
+    i1 = 0;
+    i2 = 0;
+    j = 0;
+    int mod = 8;
+    int tmplen;
+    serverLog(LL_WARNING, "-------------- ascii and charactor ---------------- ");
+    while (1) {
+
+	    tmplen = 0;
+            char tmpbuf[1024];
+	    char *tmpp = tmpbuf + tmplen;
+	    memset(tmpbuf, 0, sizeof(tmpbuf));
+
+//serverLog(LL_WARNING, "MY_DEBUG == %s:%d:%s == tmpbuf:%X tmpp:%X, tmplen:%d", __FILE__, __LINE__, __FUNCTION__, tmpbuf, tmpp, tmplen);
+	    //serverLog(LL_WARNING, "|");
+            tmplen = sprintf(tmpp, "|");
+            tmpp = tmpp + tmplen;
+
+	    for (j = 0; j < mod; ++j) {
+		    if (i1 < nread) {
+			    //serverLog(LL_WARNING, "%02X ", buf[i1]);
+			    tmplen = sprintf(tmpp, "%02X ", buf[i1]);
+			    tmpp = tmpp + tmplen;
+
+			    i1++;
+		    }
+	    }
+	    int k;
+
+//serverLog(LL_WARNING, "MY_DEBUG == %s:%d:%s == tmpbuf:%X tmpp:%X, tmplen:%d", __FILE__, __LINE__, __FUNCTION__, tmpbuf, tmpp, tmplen);
+	    if (i1 % mod == 0) {
+		    //serverLog(LL_WARNING, "|    |");
+		    tmplen = sprintf(tmpp, "|    |");
+                    tmpp = tmpp + tmplen;
+			
+	    } else {
+		    for (k = 0; k < (mod - i1%mod)*3; ++k) {
+			    //serverLog(LL_WARNING, " ");
+                            tmplen = sprintf(tmpp, " ");
+                    	    tmpp = tmpp + tmplen;
+		    }
+		    //serverLog(LL_WARNING, "|    |");
+                    tmplen = sprintf(tmpp, "|    |");
+                    tmpp = tmpp + tmplen;
+	    }
+
+//serverLog(LL_WARNING, "MY_DEBUG == %s:%d:%s == tmpbuf:%X tmpp:%X, tmplen:%d", __FILE__, __LINE__, __FUNCTION__, tmpbuf, tmpp, tmplen);
+	    for (j = 0; j < mod; ++j) {
+		    if (i2 < nread) {
+			    if (isprint(buf[i2]) != 0) {
+				    //serverLog(LL_WARNING, "%c", buf[i2]);
+				    tmplen = sprintf(tmpp, "%c", buf[i2]);
+                                    tmpp = tmpp + tmplen;
+			    } else {
+				    //serverLog(LL_WARNING, ".");
+				    tmplen = sprintf(tmpp, ".");
+                                    tmpp = tmpp + tmplen;
+			    }
+			    i2++;
+		    }
+	    }
+	    if (i2 % mod == 0) {
+		    //serverLog(LL_WARNING, "|\n");
+                    tmplen = sprintf(tmpp, "|");
+                    tmpp = tmpp + tmplen;
+	    } else {
+		    for (k = 0; k < (mod - i2%mod)*1; ++k) {
+			    //serverLog(LL_WARNING, " ");
+			    tmplen = sprintf(tmpp, " ");
+			    tmpp = tmpp + tmplen;
+		    }
+		    //serverLog(LL_WARNING, "|\n");
+		    tmplen = sprintf(tmpp, "|");
+		    tmpp = tmpp + tmplen;
+	    }
+//serverLog(LL_WARNING, "MY_DEBUG == %s:%d:%s == tmpbuf:%X tmpp:%X, tmplen:%d", __FILE__, __LINE__, __FUNCTION__, tmpbuf, tmpp, tmplen);
+            serverLog(LL_WARNING, "%s", tmpbuf);
+	    if (i1 == nread && i2 == nread) {
+//serverLog(LL_WARNING, "MY_DEBUG == %s:%d:%s == ", __FILE__, __LINE__, __FUNCTION__);
+		    break;
+	    }
+    }
+    serverLog(LL_WARNING, "--------------------------------------------------- ");
+
+
+
+
     if (nread == -1) {
         if (errno == EAGAIN) {
             return;
