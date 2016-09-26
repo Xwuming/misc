@@ -27,10 +27,10 @@ inline void current_stack(char *buf, int len)
 		left_len -= write_len;
 	}
 
-    char **strings; 
-    void *buffer[100]; 
-    int j, nptrs; 
-    nptrs = backtrace(buffer, 100); 
+	char **strings; 
+	void *buffer[100]; 
+	int j, nptrs; 
+	nptrs = backtrace(buffer, 100); 
 
 	if (left_len > 0) {
 		write_len = snprintf(write_ptr, left_len, "backtrace() returned %d addresses \n", nptrs);
@@ -38,23 +38,29 @@ inline void current_stack(char *buf, int len)
 		left_len -= write_len;
 	}
 
-    strings = backtrace_symbols(buffer, nptrs); 
-    if (strings == NULL) { 
-        if (left_len > 0) {
+	strings = backtrace_symbols(buffer, nptrs); 
+	if (strings == NULL) { 
+		if (left_len > 0) {
 			write_len = snprintf(write_ptr, left_len, "backtrace_symbols return NULL \n");
 			write_ptr += write_len;
 			left_len -= write_len;
 		}
 		return;
-    } 
-    for (j = 0; j < nptrs; j++) {
-        if (left_len > 0) {
+	} 
+	for (j = 0; j < nptrs; j++) {
+		if (left_len > 0) {
 			write_len = snprintf(write_ptr, left_len, "==%s== \n", strings[j]);
 			write_ptr += write_len;
 			left_len -= write_len;
 		}
 	}
-    free(strings); 
+	free(strings); 
+
+	if (left_len > 0) {
+		write_len = snprintf(write_ptr, left_len, "%s", "------------------------- \n");
+		write_ptr += write_len;
+		left_len -= write_len;
+	}
 }
 
 #endif
